@@ -9,15 +9,15 @@ const serverUrl = `https://${projectId}.supabase.co/functions/v1/make-server-34a
 
 // Auth functions
 export const signUp = async (email: string, password: string, name: string, role: string) => {
-  const response = await fetch(`${serverUrl}/signup`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${publicAnonKey}`,
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name, role: role || 'profesor' },
     },
-    body: JSON.stringify({ email, password, name, role }),
   });
-  return response.json();
+  if (error) throw error;
+  return data;
 };
 
 export const signIn = async (email: string, password: string) => {
@@ -38,15 +38,16 @@ export const getCurrentUser = async () => {
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error || !session) return null;
   
-  const response = await fetch(`${serverUrl}/me`, {
-    headers: {
-      'Authorization': `Bearer ${session.access_token}`,
-    },
-  });
-  
-  if (!response.ok) return null;
-  const { user } = await response.json();
-  return { ...user, access_token: session.access_token };
+  const { data: { user }, error: userError } = await supabase.auth.getUser(session.access_token);
+  if (userError || !user) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.user_metadata?.name || '',
+    role: user.user_metadata?.role || 'profesor',
+    access_token: session.access_token,
+  };
 };
 
 // Student functions
