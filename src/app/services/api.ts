@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
 
@@ -60,8 +60,12 @@ export const getStudents = async (accessToken: string) => {
   return response.json();
 };
 
-export const getStudent = async (id: string) => {
-  const response = await fetch(`${serverUrl}/students/${id}`);
+export const getStudent = async (accessToken: string, id: string) => {
+  const response = await fetch(`${serverUrl}/students/${id}`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
   if (!response.ok) throw new Error('Error fetching student');
   return response.json();
 };

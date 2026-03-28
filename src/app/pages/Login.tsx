@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { signIn, signUp } from '../services/api';
+import { signIn, signUp, getCurrentUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { GraduationCap, LogIn } from 'lucide-react';
@@ -21,18 +21,16 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        const data = await signIn(email, password);
-        const userResponse = await fetch(`https://${(await import('/utils/supabase/info')).projectId}.supabase.co/functions/v1/make-server-34a21b05/me`, {
-          headers: {
-            'Authorization': `Bearer ${data.session.access_token}`,
-          },
-        });
-        const { user } = await userResponse.json();
-        setUser({ ...user, access_token: data.session.access_token });
+        await signIn(email, password);
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+          throw new Error('No se pudo obtener información del usuario');
+        }
+        setUser(currentUser);
         
         toast.success('¡Bienvenido!');
         
-        if (user.role === 'admin') {
+        if (currentUser.role === 'admin') {
           navigate('/admin');
         } else {
           navigate('/scanner');
